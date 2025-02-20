@@ -1,26 +1,9 @@
-# 图表介绍
-
-为了更好地介绍整个项目，笔者对整个项目进行了一些可视化地表述，此文档主要是对这些可视化表述的图表进行一些阐述和补充。
-
-
-
-## 数据库设计
-
-数据库的库表E-R模型存放在diagram文件夹下的gantt-db.drawio文件中，读者可以通过[draw.io](https://www.drawio.com/)打开，也可以直接看下面的E-R模型PNG版：
-
-<img src="./imgs/gantt-db-drawio.png" alt="数据库库表设计" style="zoom:100%;" />
-
-
-
-其中涉及到的数据库定义语言如下：
-
-```sql
 -- 创建数据库
-CREATE DATABASE IF NOT EXISTS GanttDB 
+CREATE DATABASE IF NOT EXISTS ganttdb 
 DEFAULT CHARACTER SET = utf8mb4    
 DEFAULT COLLATE = utf8mb4_unicode_ci;
 
-USE GanttDB;
+USE ganttdb;
 
 -- 用户表（必须存在）
 CREATE TABLE IF NOT EXISTS `User` (
@@ -61,19 +44,20 @@ CREATE TABLE IF NOT EXISTS `GanttLinks` (
 -- 团队表
 CREATE TABLE IF NOT EXISTS `Team` (
     `team_id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `tprj_id` INT(11) NOT NULL COMMENT "The id of Team Project",
+    `user_id` INT(11) NOT NULL,
+    `owner_id` INT(11) NOT NULL COMMENT "Onwer of the team",
     `teamname` VARCHAR(32) NOT NULL,
-    `role` ENUM("admin" | "member" | "viewer") NOT NULL,
+    `role` ENUM("admin", "member", "viewer") NOT NULL DEFAULT 'viewer',
     `create_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `update_date` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (`tprj_id`) REFERENCES TeamProject(`tprj_id`)
+    FOREIGN KEY (`user_id`) REFERENCES User(`user_id`)
 );
 
 -- 团队项目表
 CREATE TABLE IF NOT EXISTS `TeamProject` (
-    `tprj_id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `tprj_id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY COMMENT "ID of the Team Project",
     `team_id` INT(11) NOT NULL,
-    `gantt_task_id` INT(11) NOT NULL,  -- 关联任务
+    `gantt_task_id` INT(11) NOT NULL, -- 关联任务
     `gantt_link_id` INT(11) NOT NULL, -- 关联关系
     FOREIGN KEY (`team_id`) REFERENCES Team(`team_id`),
     FOREIGN KEY (`gantt_task_id`) REFERENCES GanttTasks(`id`),
@@ -90,7 +74,3 @@ CREATE TABLE IF NOT EXISTS `UserProject` (
     FOREIGN KEY (`gantt_task_id`) REFERENCES GanttTasks(`id`),
     FOREIGN KEY (`gantt_link_id`) REFERENCES GanttLinks(`id`)
 );
-```
-
-
-
