@@ -6,91 +6,144 @@
 
 ## 数据库设计
 
-数据库的库表E-R模型存放在diagram文件夹下的gantt-db.drawio文件中，读者可以通过[draw.io](https://www.drawio.com/)打开，也可以直接看下面的E-R模型PNG版：
+数据库的库表E-R模型存放在diagram文件夹下的gantt-db.drawio文件中，E-R模型PNG版如下图-1所示（省略了部分关联表）：
 
 <img src="./imgs/gantt-db-drawio.png" alt="数据库库表设计" style="zoom:100%;" />
 
+<p style="text-align:center">图-1</p>
 
 
-其中涉及到的数据库定义语言如下：
+
+其中使用的所有数据库定义语言如下：
 
 ```sql
--- 创建数据库
-CREATE DATABASE IF NOT EXISTS GanttDB 
-DEFAULT CHARACTER SET = utf8mb4    
-DEFAULT COLLATE = utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS `gantt_db`
+    DEFAULT CHARACTER SET = utf8mb4
+    DEFAULT COLLATE = utf8mb4_unicode_ci;
 
-USE GanttDB;
+USE `gantt_db`;
 
--- 用户表（必须存在）
-CREATE TABLE IF NOT EXISTS `User` (
-    `user_id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `username` VARCHAR(32) NOT NULL,
-    `password` VARCHAR(32) NOT NULL,
-    `nickname` VARCHAR(32) NOT NULL,
-    `email` varchar(128),
-    `create_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
-    `update_date` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+-- 用户表
+CREATE TABLE IF NOT EXISTS `user`
+(
+    `user_id`     INT         NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `username`    VARCHAR(32) NOT NULL,
+    `password`    VARCHAR(32) NOT NULL,
+    `nickname`    VARCHAR(32) DEFAULT NULL,
+    `email`       varchar(32) UNIQUE,
+    `create_time` DATETIME    DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- GanttTask表
-CREATE TABLE IF NOT EXISTS `GanttTasks` (
-    `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `text` VARCHAR(255) NOT NULL,
-    `start_date` DATETIME NOT NULL,
-    `duration` INT(11) NOT NULL,
-    `progress` FLOAT NOT NULL DEFAULT 0,
-    `parent` INT(11) NOT NULL,
-    `sortorder` INT(11) NOT NULL,
-    `create_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
-    `update_date` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+-- 任务数据表
+CREATE TABLE IF NOT EXISTS `task`
+(
+    `task_uuid`   VARCHAR(32)  NOT NULL PRIMARY KEY,
+    `text`        VARCHAR(255) NOT NULL COMMENT "项目名",
+    `start_time`  DATETIME     NOT NULL,
+    `duration`    INT          NOT NULL,
+    `progress`    FLOAT        NOT NULL DEFAULT 0,
+    `parent`      INT          NOT NULL,
+    `sort_order`  INT          NOT NULL,
+    `create_time` DATETIME              DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME              DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- GanttLink表
-CREATE TABLE IF NOT EXISTS `GanttLinks` (
-    `id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `source` INT(11) NOT NULL,
-    `target` INT(11) NOT NULL,
-    `type` VARCHAR(1) NOT NULL,
-    `create_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
-    `update_date` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (`source`) REFERENCES GanttTasks(`id`),
-    FOREIGN KEY (`target`) REFERENCES GanttTasks(`id`)
+-- 连接信息表
+CREATE TABLE IF NOT EXISTS `link`
+(
+    `link_uuid`   VARCHAR(32) NOT NULL PRIMARY KEY,
+    `source`      VARCHAR(32) NOT NULL,
+    `target`      VARCHAR(32) NOT NULL,
+    `type`        VARCHAR(1)  NOT NULL COMMENT "连接线的类型",
+    `color`       VARCHAR(16) COMMENT "连接线的颜色",
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`source`) REFERENCES task (`task_uuid`),
+    FOREIGN KEY (`target`) REFERENCES task (`task_uuid`)
 );
 
 -- 团队表
-CREATE TABLE IF NOT EXISTS `Team` (
-    `team_id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `tprj_id` INT(11) NOT NULL COMMENT "The id of Team Project",
-    `teamname` VARCHAR(32) NOT NULL,
-    `role` ENUM("admin" | "member" | "viewer") NOT NULL,
-    `create_date` DATETIME DEFAULT CURRENT_TIMESTAMP,
-    `update_date` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (`tprj_id`) REFERENCES TeamProject(`tprj_id`)
+CREATE TABLE IF NOT EXISTS `team`
+(
+    `team_id`     INT         NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `team_name`   VARCHAR(32) NOT NULL,
+    `team_owner`  INT         NOT NULL,
+    `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- user 和 team 关联表
+CREATE TABLE IF NOT EXISTS `user_team`
+(
+    `user_id`   INT         NOT NULL,
+    `team_id`   INT         NOT NULL,
+    `team_role` VARCHAR(16) NOT NULL DEFAULT 'member',
+    PRIMARY KEY (user_id, team_id),
+    FOREIGN KEY (user_id) REFERENCES user (`user_id`) ON DELETE CASCADE,
+    FOREIGN KEY (team_id) REFERENCES team (`team_id`) ON DELETE CASCADE
+);
+
+-- 个人项目表
+CREATE TABLE IF NOT EXISTS `user_project`
+(
+    `user_id`           INT         NOT NULL,
+    `user_project_name` VARCHAR(32) NOT NULL,
+    `user_project_uuid` VARCHAR(32) PRIMARY KEY,
+    `create_time`       DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `update_time`       DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`user_id`) REFERENCES user (`user_id`) ON DELETE CASCADE
+);
+
+-- 个人项目 关联 task 的表
+CREATE TABLE IF NOT EXISTS `user_project_tasks`
+(
+    `user_project_uuid` VARCHAR(32) NOT NULL,
+    `task_uuid`         VARCHAR(32) NOT NULL,
+    PRIMARY KEY (user_project_uuid, task_uuid),
+    FOREIGN KEY (`user_project_uuid`) REFERENCES user_project (`user_project_uuid`) ON DELETE CASCADE,
+    FOREIGN KEY (`task_uuid`) REFERENCES task (`task_uuid`) ON DELETE CASCADE
+);
+
+-- 个人项目 关联 link 的表
+CREATE TABLE IF NOT EXISTS `user_project_links`
+(
+    `user_project_uuid` VARCHAR(32) NOT NULL,
+    `link_uuid`         VARCHAR(32) NOT NULL,
+    PRIMARY KEY (user_project_uuid, link_uuid),
+    FOREIGN KEY (`user_project_uuid`) REFERENCES user_project (`user_project_uuid`) ON DELETE CASCADE,
+    FOREIGN KEY (`link_uuid`) REFERENCES link (`link_uuid`) ON DELETE CASCADE
 );
 
 -- 团队项目表
-CREATE TABLE IF NOT EXISTS `TeamProject` (
-    `tprj_id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `team_id` INT(11) NOT NULL,
-    `gantt_task_id` INT(11) NOT NULL,  -- 关联任务
-    `gantt_link_id` INT(11) NOT NULL, -- 关联关系
-    FOREIGN KEY (`team_id`) REFERENCES Team(`team_id`),
-    FOREIGN KEY (`gantt_task_id`) REFERENCES GanttTasks(`id`),
-    FOREIGN KEY (`gantt_link_id`) REFERENCES GanttLinks(`id`)
+CREATE TABLE IF NOT EXISTS `team_project`
+(
+    `team_id`           INT         NOT NULL,
+    `team_project_name` VARCHAR(32) NOT NULL,
+    `team_project_uuid` VARCHAR(32) PRIMARY KEY,
+    `create_time`       DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `update_time`       DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`team_id`) REFERENCES team (`team_id`) ON DELETE CASCADE
 );
 
--- 用户项目表
-CREATE TABLE IF NOT EXISTS `UserProject` (
-    `uprj_id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `user_id` INT(11) NOT NULL,
-    `gantt_task_id` INT(11) NOT NULL,
-    `gantt_link_id` INT(11) DEFAULT NULL,
-    FOREIGN KEY (`user_id`) REFERENCES User(`user_id`),
-    FOREIGN KEY (`gantt_task_id`) REFERENCES GanttTasks(`id`),
-    FOREIGN KEY (`gantt_link_id`) REFERENCES GanttLinks(`id`)
+-- 团队项目 关联 task 的表
+CREATE TABLE IF NOT EXISTS `team_project_tasks`
+(
+    `team_project_uuid` VARCHAR(32) NOT NULL,
+    `task_uuid`         VARCHAR(32) NOT NULL,
+    PRIMARY KEY (team_project_uuid, task_uuid),
+    FOREIGN KEY (`team_project_uuid`) REFERENCES team_project (`team_project_uuid`) ON DELETE CASCADE,
+    FOREIGN KEY (`task_uuid`) REFERENCES task (`task_uuid`) ON DELETE CASCADE
+);
+
+-- 团队项目 关联 link 的表
+CREATE TABLE IF NOT EXISTS `team_project_links`
+(
+    `team_project_uuid` VARCHAR(32) NOT NULL,
+    `link_uuid`         VARCHAR(32) NOT NULL,
+    PRIMARY KEY (team_project_uuid, link_uuid),
+    FOREIGN KEY (`team_project_uuid`) REFERENCES team_project (`team_project_uuid`) ON DELETE CASCADE,
+    FOREIGN KEY (`link_uuid`) REFERENCES link (`link_uuid`) ON DELETE CASCADE
 );
 ```
-
-
 

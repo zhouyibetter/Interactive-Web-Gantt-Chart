@@ -2,10 +2,13 @@ package com.zhouyibetter.controller;
 
 import com.zhouyibetter.pojo.Result;
 import com.zhouyibetter.pojo.User;
+import com.zhouyibetter.pojo.UserLoginRequest;
 import com.zhouyibetter.service.UserService;
 import com.zhouyibetter.utils.JwtUtil;
 import com.zhouyibetter.utils.Md5Util;
 import com.zhouyibetter.utils.ThreadLocalUtil;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -27,6 +30,23 @@ public class UserController {
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
+    @PostMapping("/auth")
+    public Result Auth(HttpServletRequest request) {
+        // 令牌验证
+        String token = request.getHeader("Authorization");
+        if (token == null) {
+            return Result.error("未登录");
+        }
+        // 从Redis中获取相同的token
+        ValueOperations<String, String> operations = stringRedisTemplate.opsForValue();
+        String redisToken = operations.get(token);
+        if (redisToken == null) {
+            // token已经失效
+            return Result.error("已失效");
+        }
+        return Result.success();
+    }
+
     @PostMapping("/register")
     public Result Register(@Pattern(regexp = "^\\S{5,16}$") String username, @Pattern(regexp = "^\\S{5,16}$") String password) {
         // 1. 查询用户
@@ -41,7 +61,9 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public Result Login(@Pattern(regexp = "^\\S{5,16}$") String username, @Pattern(regexp = "^\\S{5,16}$") String password) {
+    public Result Login(@Valid @RequestBody UserLoginRequest request) {
+        String username = request.getUsername();
+        String password = request.getPassword();
         // 根据用户名查询用户
         User loginUser = userService.findByUserName(username);
         // 判断用户是否存在

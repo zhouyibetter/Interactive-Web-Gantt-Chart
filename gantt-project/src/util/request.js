@@ -1,10 +1,26 @@
-// 定制请求的实例
-
 // 导入axios
 import axios from 'axios';
 
-const baseURL = 'http://localhost:8080';
-const instance = axios.create({ baseURL });
+const baseURL = 'http://localhost:8081';
+const instance = axios.create({
+    baseURL,
+    headers: {
+        'Content-Type': 'application/json'
+    }
+});
+
+// 添加请求拦截器
+instance.interceptors.request.use(
+    config => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers['Authorization'] = token;
+        }
+        return config;
+    }, err => {
+        return Promise.reject(err);
+    }
+)
 
 // 添加响应拦截器
 instance.interceptors.response.use(

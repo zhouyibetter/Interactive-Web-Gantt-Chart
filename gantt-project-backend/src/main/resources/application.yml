@@ -14,7 +14,7 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/big_event
+    url: jdbc:mysql://localhost:3306/ganttdb
     username: root
     password: "@MYSQL123jhwsx"
   data:
@@ -24,9 +24,14 @@ spring:
   config:
     activate:
       on-profile: dev
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
 
 server:
   port: 8081
+
 
 ---
 
