@@ -14,7 +14,7 @@ server:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/ganttdb
+    url: jdbc:mysql://localhost:3306/gantt_db
     username: root
     password: "@MYSQL123jhwsx"
   data:
@@ -30,7 +30,7 @@ spring:
     show-sql: true
 
 server:
-  port: 8081
+  port: 8080
 
 
 ---

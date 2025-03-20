@@ -27,10 +27,11 @@ USE `gantt_db`;
 CREATE TABLE IF NOT EXISTS `user`
 (
     `user_id`     INT         NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `username`    VARCHAR(32) NOT NULL,
+    `user_name`    VARCHAR(32) NOT NULL,
     `password`    VARCHAR(32) NOT NULL,
-    `nickname`    VARCHAR(32) DEFAULT NULL,
+    `nick_name`    VARCHAR(32) DEFAULT NULL,
     `email`       varchar(32) UNIQUE,
+    `deleted`     BOOL NOT NULL DEFAULT false,
     `create_time` DATETIME    DEFAULT CURRENT_TIMESTAMP,
     `update_time` DATETIME    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -45,6 +46,7 @@ CREATE TABLE IF NOT EXISTS `task`
     `progress`    FLOAT        NOT NULL DEFAULT 0,
     `parent`      INT          NOT NULL,
     `sort_order`  INT          NOT NULL,
+    `deleted`     BOOL NOT NULL DEFAULT false,
     `create_time` DATETIME              DEFAULT CURRENT_TIMESTAMP,
     `update_time` DATETIME              DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -57,6 +59,7 @@ CREATE TABLE IF NOT EXISTS `link`
     `target`      VARCHAR(32) NOT NULL,
     `type`        VARCHAR(1)  NOT NULL COMMENT "连接线的类型",
     `color`       VARCHAR(16) COMMENT "连接线的颜色",
+    `deleted`     BOOL NOT NULL DEFAULT false,
     `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`source`) REFERENCES task (`task_uuid`),
@@ -69,6 +72,7 @@ CREATE TABLE IF NOT EXISTS `team`
     `team_id`     INT         NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `team_name`   VARCHAR(32) NOT NULL,
     `team_owner`  INT         NOT NULL,
+    `deleted`     BOOL NOT NULL DEFAULT false,
     `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -145,5 +149,6 @@ CREATE TABLE IF NOT EXISTS `team_project_links`
     FOREIGN KEY (`team_project_uuid`) REFERENCES team_project (`team_project_uuid`) ON DELETE CASCADE,
     FOREIGN KEY (`link_uuid`) REFERENCES link (`link_uuid`) ON DELETE CASCADE
 );
+
 ```
 

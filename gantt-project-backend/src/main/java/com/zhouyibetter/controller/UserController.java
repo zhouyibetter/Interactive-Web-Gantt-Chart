@@ -61,9 +61,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public Result Login(@Valid @RequestBody UserLoginRequest request) {
-        String username = request.getUsername();
-        String password = request.getPassword();
+    public Result Login(String username, String password) {
         // 根据用户名查询用户
         User loginUser = userService.findByUserName(username);
         // 判断用户是否存在

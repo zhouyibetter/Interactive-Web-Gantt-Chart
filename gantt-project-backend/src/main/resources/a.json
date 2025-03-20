@@ -1,0 +1,45 @@
+{
+  "code": 0,
+  "message": "操作成功",
+  "data": {
+    "task": [
+      {
+        "id": "t0220401161689adwcifsu89wsdfBF",
+        "text": "Project #1",
+        "start_date": "01-04-2020",
+        "duration": 18,
+        "parent": 0
+      },
+      {
+        "id": "t02204011616ad23wciffwaIFFAWDD",
+        "text": "Task #1",
+        "start_date": "02-04-2020",
+        "duration": 8,
+        "parent": 1
+      },
+      {
+        "id": "t02204011616ad23wciffw25FFfaOP",
+        "text": "Task #2",
+        "start_date": "11-04-2020",
+        "duration": 8,
+        "parent": 1
+      }
+    ],
+    "links": [
+      {
+        "id": "t0220401161689adxxxxsu89wsdfBF",
+        "source": "t0220401161689adwcifsu89wsdfBF",
+        "target": "t02204011616ad23wciffwaIFFAWDD",
+        "type": "1",
+        "color": "red"
+      },
+      {
+        "id": "t0220401161689adyyyysu89wsdfBF",
+        "source": "t02204011616ad23wciffwaIFFAWDD",
+        "target": "t02204011616ad23wciffw25FFfaOP",
+        "type": "0",
+        "color": "blue"
+      }
+    ]
+  }
+}
